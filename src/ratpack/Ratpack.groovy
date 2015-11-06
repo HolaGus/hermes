@@ -27,6 +27,8 @@ ratpack {
 
     bindInstance(HermesConfig, configData.get("/", HermesConfig))
 
+    bindInstance(ConfigData, configData)
+
     module SlackModule
     module MarkupTemplateModule
 
