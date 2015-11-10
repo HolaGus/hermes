@@ -6,7 +6,7 @@ import com.google.inject.Inject
 import com.netflix.hystrix.HystrixCommandGroupKey
 import com.netflix.hystrix.HystrixCommandKey
 import com.netflix.hystrix.HystrixObservableCommand
-import gus.hermes.config.HermesConfig
+import ratpack.config.ConfigData
 import ratpack.http.client.HttpClient
 import ratpack.http.client.ReceivedResponse
 import rx.Observable
@@ -17,22 +17,23 @@ import rx.Observable
 class SlackCommands {
 
   private final HttpClient httpClient
-  private final HermesConfig config
+  private final ConfigData configData
 
   @Inject
-  SlackCommands(HttpClient httpClient, HermesConfig config) {
-    this.config = config
+  SlackCommands(HttpClient httpClient, ConfigData configData) {
+    this.configData = configData
     this.httpClient = httpClient
   }
 
   Observable<String> getChannels() {
     new HystrixObservableCommand<String>(
-      HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("http-slack-channels"))
+      HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("http-slack-api"))
         .andCommandKey(HystrixCommandKey.Factory.asKey("getChannels"))) {
 
       @Override
       protected Observable<String> construct() {
-        def uri = "https://slack.com/api/channels.list?token=${config.slackApiToken}".toURI()
+        def slackApiToken = configData.get('/slackApiToken', String)
+        def uri = "https://slack.com/api/channels.list?token=${slackApiToken}".toURI()
         observe(httpClient.get(uri)).map { ReceivedResponse resp ->
           resp.body.text
         }
@@ -45,7 +46,7 @@ class SlackCommands {
 
       @Override
       protected String getCacheKey() {
-        return "http-slack-channels"
+        "http-slack-channels"
       }
     }.toObservable()
   }
