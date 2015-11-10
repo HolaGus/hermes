@@ -25,7 +25,7 @@ ratpack {
       c.sysProps()
     }
 
-    bindInstance(HermesConfig, configData.get("/", HermesConfig))
+    bindInstance(HermesConfig, configData.get('/', HermesConfig))
 
     bindInstance(ConfigData, configData)
 
@@ -37,22 +37,22 @@ ratpack {
     bindInstance Service, new Service() {
       @Override
       void onStart(StartEvent event) throws Exception {
-        logger.info "Initializing RX"
+        logger.info 'Initializing RX'
         RxRatpack.initialize()
       }
     }
   }
 
   handlers {
-    prefix("api/v1") {
+    prefix('api/v1') {
       all chain(registry.get(HermesRestEndpoint))
     }
 
     get {
-      render groovyMarkupTemplate("index.gtpl", title: "My Ratpack App CHIDA")
+      render groovyMarkupTemplate('index.gtpl', title: 'My Ratpack App CHIDA')
     }
 
-    path("create") {
+    path('create') {
       byMethod {
         post {
           //observe(parse(Form)).map { it.get('foo') }.subscribe { context.render(it) }
@@ -63,6 +63,6 @@ ratpack {
       }
     }
 
-    files { dir "public" }
+    files { dir 'public' }
   }
 }

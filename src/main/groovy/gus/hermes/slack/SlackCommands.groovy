@@ -27,8 +27,8 @@ class SlackCommands {
 
   Observable<String> getChannels() {
     new HystrixObservableCommand<String>(
-      HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("http-slack-api"))
-        .andCommandKey(HystrixCommandKey.Factory.asKey("getChannels"))) {
+      HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey('http-slack-api'))
+        .andCommandKey(HystrixCommandKey.Factory.asKey('getChannels'))) {
 
       @Override
       protected Observable<String> construct() {
@@ -46,7 +46,7 @@ class SlackCommands {
 
       @Override
       protected String getCacheKey() {
-        "http-slack-channels"
+        'http-slack-channels'
       }
     }.toObservable()
   }

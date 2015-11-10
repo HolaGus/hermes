@@ -16,13 +16,12 @@ class HermesRestEndpoint extends GroovyChainAction {
 
   @Inject
   HermesRestEndpoint(SlackCommands slackCommands) {
-
     this.slackCommands = slackCommands
   }
 
   @Override
   void execute() throws Exception {
-    path("channels") {
+    path('channels') {
       byMethod {
         get {
           slackCommands.channels.single().subscribe {
