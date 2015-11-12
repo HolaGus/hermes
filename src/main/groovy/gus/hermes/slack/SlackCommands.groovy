@@ -32,8 +32,8 @@ class SlackCommands {
 
       @Override
       protected Observable<String> construct() {
-        def slackApiToken = configData.get('/slackApiToken', String)
-        def uri = "https://slack.com/api/channels.list?token=${slackApiToken}".toURI()
+        String slackApiToken = configData.get('/slackApiToken', String)
+        URI uri = "https://slack.com/api/channels.list?token=${slackApiToken}".toURI()
         observe(httpClient.get(uri)).map { ReceivedResponse resp ->
           resp.body.text
         }
