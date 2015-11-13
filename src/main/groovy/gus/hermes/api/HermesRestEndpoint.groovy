@@ -30,6 +30,16 @@ class HermesRestEndpoint extends GroovyChainAction {
         }
       }
     }
+    path('channels/:channelId') {
+      def channelId = pathTokens['channelId']
+      byMethod {
+        get {
+          slackCommands.getChannelsInfo(channelId).single().subscribe {
+            render json(new JsonSlurper().parseText(it))
+          }
+        }
+      }
+    }
     path('users') {
       byMethod {
         get {
