@@ -77,4 +77,30 @@ class SlackCommands {
       }
     }.toObservable()
   }
+
+  Observable<String> getUsersInfo(final String user) {
+    new HystrixObservableCommand<String>(
+      HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
+        .andCommandKey(HystrixCommandKey.Factory.asKey('getUsersInfo'))) {
+
+      @Override
+      protected Observable<String> construct() {
+        String slackApiToken = configData.get('/slackApiToken', String)
+        URI uri = "https://slack.com/api/users.info?token=${slackApiToken}&user=${user}".toURI()
+        observe(httpClient.get(uri)).map { ReceivedResponse resp ->
+          resp.body.text
+        }
+      }
+
+      @Override
+      protected Observable<String> resumeWithFallback() {
+        Observable.just('{}')
+      }
+
+      @Override
+      protected String getCacheKey() {
+        "http-slack-users-info-${user}"
+      }
+    }.toObservable()
+  }
 }
