@@ -30,5 +30,14 @@ class HermesRestEndpoint extends GroovyChainAction {
         }
       }
     }
+    path('users') {
+      byMethod {
+        get {
+          slackCommands.users.single().subscribe {
+            render json(new JsonSlurper().parseText(it))
+          }
+        }
+      }
+    }
   }
 }

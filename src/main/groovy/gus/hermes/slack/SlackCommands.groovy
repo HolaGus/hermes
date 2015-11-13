@@ -16,6 +16,7 @@ import rx.Observable
  */
 class SlackCommands {
 
+  public static final String SLACK_COMMAND_GROUP_KEY = 'http-slack-api'
   private final HttpClient httpClient
   private final ConfigData configData
 
@@ -27,7 +28,7 @@ class SlackCommands {
 
   Observable<String> getChannels() {
     new HystrixObservableCommand<String>(
-      HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey('http-slack-api'))
+      HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
         .andCommandKey(HystrixCommandKey.Factory.asKey('getChannels'))) {
 
       @Override
@@ -47,6 +48,32 @@ class SlackCommands {
       @Override
       protected String getCacheKey() {
         'http-slack-channels'
+      }
+    }.toObservable()
+  }
+
+  Observable<String> getUsers() {
+    new HystrixObservableCommand<String>(
+      HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
+        .andCommandKey(HystrixCommandKey.Factory.asKey('getUsers'))) {
+
+      @Override
+      protected Observable<String> construct() {
+        String slackApiToken = configData.get('/slackApiToken', String)
+        URI uri = "https://slack.com/api/users.list?token=${slackApiToken}&presence=1".toURI()
+        observe(httpClient.get(uri)).map { ReceivedResponse resp ->
+          resp.body.text
+        }
+      }
+
+      @Override
+      protected Observable<String> resumeWithFallback() {
+        Observable.just('{}')
+      }
+
+      @Override
+      protected String getCacheKey() {
+        'http-slack-users'
       }
     }.toObservable()
   }
