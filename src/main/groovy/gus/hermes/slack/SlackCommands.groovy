@@ -5,6 +5,7 @@ import static ratpack.rx.RxRatpack.observe
 import com.google.inject.Inject
 import com.netflix.hystrix.HystrixCommandGroupKey
 import com.netflix.hystrix.HystrixCommandKey
+import com.netflix.hystrix.HystrixCommandProperties
 import com.netflix.hystrix.HystrixObservableCommand
 import ratpack.config.ConfigData
 import ratpack.http.client.HttpClient
@@ -127,6 +128,49 @@ class SlackCommands {
       protected String getCacheKey() {
         "http-slack-users-info-${user}"
       }
+    }.toObservable()
+  }
+
+  Observable<String> getChannelsHistory(final String channel) {
+    new HystrixObservableCommand<String>(
+      HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
+        .andCommandKey(HystrixCommandKey.Factory.asKey('getChannelsHistory'))
+        .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
+        .withExecutionIsolationThreadTimeoutInMilliseconds(3000))
+    ) {
+
+      @Override
+      protected Observable<String> construct() {
+        String slackApiToken = configData.get('/slackApiToken', String)
+        URI uri = "https://slack.com/api/channels.history?token=${slackApiToken}&channel=${channel}".toURI()
+        observe(httpClient.get(uri)).map { ReceivedResponse resp ->
+          resp.body.text
+        }
+      }
+
+      @Override
+      protected Observable<String> resumeWithFallback() {
+        handleErrors()
+        Observable.just('{}')
+      }
+
+      @Override
+      protected String getCacheKey() {
+        "http-slack-channels-history-${channel}"
+      }
+
+      protected void handleErrors() {
+        final String message;
+        if (isFailedExecution()) {
+          message = "FAILED: " + getFailedExecutionException().getMessage();
+        } else if (isResponseTimedOut()) {
+          message = "TIMED OUT";
+        } else {
+          message = "SOME OTHER FAILURE";
+        }
+        println(message);
+      }
+
     }.toObservable()
   }
 }

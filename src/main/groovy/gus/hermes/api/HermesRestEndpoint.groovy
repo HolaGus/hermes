@@ -40,6 +40,14 @@ class HermesRestEndpoint extends GroovyChainAction {
         }
       }
     }
+    path('channels/:channelId/history') {
+      def channelId = pathTokens['channelId']
+      byMethod {
+        get {
+          render json(new JsonSlurper().parseText(slackCommands.getChannelsHistory(channelId).toBlocking().first()))
+        }
+      }
+    }
     path('users') {
       byMethod {
         get {
