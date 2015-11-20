@@ -5,7 +5,6 @@ import static ratpack.rx.RxRatpack.observe
 import com.google.inject.Inject
 import com.netflix.hystrix.HystrixCommandGroupKey
 import com.netflix.hystrix.HystrixCommandKey
-import com.netflix.hystrix.HystrixCommandProperties
 import com.netflix.hystrix.HystrixObservableCommand
 import ratpack.config.ConfigData
 import ratpack.http.client.HttpClient
@@ -134,10 +133,7 @@ class SlackCommands {
   Observable<String> getChannelsHistory(final String channel) {
     new HystrixObservableCommand<String>(
       HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
-        .andCommandKey(HystrixCommandKey.Factory.asKey('getChannelsHistory'))
-        .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
-        .withExecutionIsolationThreadTimeoutInMilliseconds(3000))
-    ) {
+        .andCommandKey(HystrixCommandKey.Factory.asKey('getChannelsHistory'))) {
 
       @Override
       protected Observable<String> construct() {
@@ -160,15 +156,15 @@ class SlackCommands {
       }
 
       protected void handleErrors() {
-        final String message;
+        final String message
         if (isFailedExecution()) {
-          message = "FAILED: " + getFailedExecutionException().getMessage();
+          message = "FAILED: " + getFailedExecutionException().getMessage()
         } else if (isResponseTimedOut()) {
-          message = "TIMED OUT";
+          message = "TIMED OUT"
         } else {
-          message = "SOME OTHER FAILURE";
+          message = "SOME OTHER FAILURE"
         }
-        println(message);
+        println(message)
       }
 
     }.toObservable()
