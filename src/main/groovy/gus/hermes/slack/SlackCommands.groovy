@@ -158,11 +158,11 @@ class SlackCommands {
       protected void handleErrors() {
         final String message
         if (isFailedExecution()) {
-          message = "FAILED: " + getFailedExecutionException().getMessage()
+          message = "FAILED: ${getFailedExecutionException().getMessage()}"
         } else if (isResponseTimedOut()) {
-          message = "TIMED OUT"
+          message = 'TIMED OUT'
         } else {
-          message = "SOME OTHER FAILURE"
+          message = 'SOME OTHER FAILURE'
         }
         println(message)
       }
