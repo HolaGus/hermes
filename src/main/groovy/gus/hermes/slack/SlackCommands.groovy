@@ -2,14 +2,13 @@ package gus.hermes.slack
 
 import static ratpack.rx.RxRatpack.observe
 
-import com.google.inject.Inject
 import com.netflix.hystrix.HystrixCommandGroupKey
 import com.netflix.hystrix.HystrixCommandKey
 import com.netflix.hystrix.HystrixObservableCommand
-import ratpack.config.ConfigData
-import ratpack.http.client.HttpClient
+import gus.hermes.slack.commands.HystrixUtils
+import ratpack.exec.Blocking
+import ratpack.exec.Promise
 import ratpack.http.client.ReceivedResponse
-import rx.Observable
 
 /**
  * Created by domix on 10/11/15.
@@ -17,22 +16,22 @@ import rx.Observable
 class SlackCommands {
 
   public static final String SLACK_COMMAND_GROUP_KEY = 'http-slack-api'
-  private final HttpClient httpClient
-  private final ConfigData configData
+  private final ratpack.http.client.HttpClient httpClient
+  private final ratpack.config.ConfigData configData
 
-  @Inject
-  SlackCommands(HttpClient httpClient, ConfigData configData) {
+  @com.google.inject.Inject
+  SlackCommands(ratpack.http.client.HttpClient httpClient, ratpack.config.ConfigData configData) {
     this.configData = configData
     this.httpClient = httpClient
   }
 
-  Observable<String> getChannels() {
+  rx.Observable<String> getChannels() {
     new HystrixObservableCommand<String>(
       HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
         .andCommandKey(HystrixCommandKey.Factory.asKey('getChannels'))) {
 
       @Override
-      protected Observable<String> construct() {
+      protected rx.Observable<String> construct() {
         String slackApiToken = configData.get('/slackApiToken', String)
         URI uri = "https://slack.com/api/channels.list?token=${slackApiToken}".toURI()
         observe(httpClient.get(uri)).map { ReceivedResponse resp ->
@@ -41,8 +40,8 @@ class SlackCommands {
       }
 
       @Override
-      protected Observable<String> resumeWithFallback() {
-        Observable.just('{}')
+      protected rx.Observable<String> resumeWithFallback() {
+        rx.Observable.just('{}')
       }
 
       @Override
@@ -52,13 +51,13 @@ class SlackCommands {
     }.toObservable()
   }
 
-  Observable<String> getChannelsInfo(final String channel) {
+  rx.Observable<String> getChannelsInfo(final String channel) {
     new HystrixObservableCommand<String>(
       HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
         .andCommandKey(HystrixCommandKey.Factory.asKey('getChannelsInfo'))) {
 
       @Override
-      protected Observable<String> construct() {
+      protected rx.Observable<String> construct() {
         String slackApiToken = configData.get('/slackApiToken', String)
         URI uri = "https://slack.com/api/channels.info?token=${slackApiToken}&channel=${channel}".toURI()
         observe(httpClient.get(uri)).map { ReceivedResponse resp ->
@@ -67,8 +66,8 @@ class SlackCommands {
       }
 
       @Override
-      protected Observable<String> resumeWithFallback() {
-        Observable.just('{}')
+      protected rx.Observable<String> resumeWithFallback() {
+        rx.Observable.just('{}')
       }
 
       @Override
@@ -78,13 +77,13 @@ class SlackCommands {
     }.toObservable()
   }
 
-  Observable<String> getUsers() {
+  rx.Observable<String> getUsers() {
     new HystrixObservableCommand<String>(
       HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
         .andCommandKey(HystrixCommandKey.Factory.asKey('getUsers'))) {
 
       @Override
-      protected Observable<String> construct() {
+      protected rx.Observable<String> construct() {
         String slackApiToken = configData.get('/slackApiToken', String)
         URI uri = "https://slack.com/api/users.list?token=${slackApiToken}&presence=1".toURI()
         observe(httpClient.get(uri)).map { ReceivedResponse resp ->
@@ -93,8 +92,8 @@ class SlackCommands {
       }
 
       @Override
-      protected Observable<String> resumeWithFallback() {
-        Observable.just('{}')
+      protected rx.Observable<String> resumeWithFallback() {
+        rx.Observable.just('{}')
       }
 
       @Override
@@ -104,13 +103,13 @@ class SlackCommands {
     }.toObservable()
   }
 
-  Observable<String> getUsersInfo(final String user) {
+  rx.Observable<String> getUsersInfo(final String user) {
     new HystrixObservableCommand<String>(
       HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
         .andCommandKey(HystrixCommandKey.Factory.asKey('getUsersInfo'))) {
 
       @Override
-      protected Observable<String> construct() {
+      protected rx.Observable<String> construct() {
         String slackApiToken = configData.get('/slackApiToken', String)
         URI uri = "https://slack.com/api/users.info?token=${slackApiToken}&user=${user}".toURI()
         observe(httpClient.get(uri)).map { ReceivedResponse resp ->
@@ -119,8 +118,8 @@ class SlackCommands {
       }
 
       @Override
-      protected Observable<String> resumeWithFallback() {
-        Observable.just('{}')
+      protected rx.Observable<String> resumeWithFallback() {
+        rx.Observable.just('{}')
       }
 
       @Override
@@ -130,43 +129,59 @@ class SlackCommands {
     }.toObservable()
   }
 
-  Observable<String> getChannelsHistory(final String channel) {
+  rx.Observable<String> getChannelsHistory(final String channel) {
+    HystrixUtils.observableCommand(SLACK_COMMAND_GROUP_KEY, 'getChannelsHistory', '{}', 3000) {
+      String slackApiToken = configData.get('/slackApiToken', String)
+      println "slackApiToken: ${slackApiToken}"
+      URI uri = "https://slack.com/api/channels.history?token=${slackApiToken}&channel=${channel}".toURI()
+      println "URI: ${uri.toString()}"
+      println "httpclient: ${httpClient}"
+
+      observe(Blocking.get { httpClient.get(uri) }).map { ReceivedResponse resp ->
+        println "status: ${resp.status.code}"
+
+        String text = resp.body.text
+        println "resp: ${text}"
+
+        return text
+      }
+    }
+  }
+
+  rx.Observable<String> getChannelsHistoryNew(final String channel) {
     new HystrixObservableCommand<String>(
       HystrixObservableCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(SLACK_COMMAND_GROUP_KEY))
         .andCommandKey(HystrixCommandKey.Factory.asKey('getChannelsHistory'))) {
 
       @Override
-      protected Observable<String> construct() {
-        String slackApiToken = configData.get('/slackApiToken', String)
+      protected rx.Observable<String> construct() {
+        /*String slackApiToken = configData.get('/slackApiToken', String)
         URI uri = "https://slack.com/api/channels.history?token=${slackApiToken}&channel=${channel}".toURI()
         observe(httpClient.get(uri)).map { ReceivedResponse resp ->
           resp.body.text
-        }
+        }*/
+        observe(Blocking.get {
+          String slackApiToken = configData.get('/slackApiToken', String)
+          URI uri = "https://slack.com/api/channels.history?token=${slackApiToken}&channel=${channel}".toURI()
+          def get = httpClient.get(uri).map {
+            it.body.text
+          }
+
+          '{ "success": true }'
+          //response.body.text
+          '{ "success": true }'
+        })
       }
 
       @Override
-      protected Observable<String> resumeWithFallback() {
-        handleErrors()
-        Observable.just('{}')
+      protected rx.Observable<String> resumeWithFallback() {
+        rx.Observable.just('{}')
       }
 
       @Override
       protected String getCacheKey() {
-        "http-slack-channels-history-${channel}"
+        "http-slack-channels-${channel}"
       }
-
-      protected void handleErrors() {
-        final String message
-        if (isFailedExecution()) {
-          message = "FAILED: ${getFailedExecutionException().getMessage()}"
-        } else if (isResponseTimedOut()) {
-          message = 'TIMED OUT'
-        } else {
-          message = 'SOME OTHER FAILURE'
-        }
-        println(message)
-      }
-
     }.toObservable()
   }
 }

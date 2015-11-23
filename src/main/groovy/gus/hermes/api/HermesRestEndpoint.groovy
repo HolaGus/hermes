@@ -44,7 +44,12 @@ class HermesRestEndpoint extends GroovyChainAction {
       def channelId = pathTokens['channelId']
       byMethod {
         get {
-          render json(new JsonSlurper().parseText(slackCommands.getChannelsHistory(channelId).toBlocking().first()))
+          //render json(new JsonSlurper().parseText(slackCommands.getChannelsHistory(channelId).toBlocking().first()))
+          /*slackCommands.getChannelsHistoryNew(channelId).single().subscribe {
+            render json(new JsonSlurper().parseText(it))
+          }*/
+
+          render json(slackCommands.getChannelsHistory(channelId).toBlocking().first())
         }
       }
     }
